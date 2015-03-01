@@ -14,12 +14,25 @@ class Player {
         $this->role = $role;
     }
     
+    public static function create($username, $role) {
+        $q = DB::prepare("INSERT INTO `players` (username, role) VALUES (:username, :role)");
+        $q->execute(array(  ":username" => $username,
+                            ":role" => $role
+                        )
+        );
+        $id = DB::lastInsertId();
+        if($q->errorCode() == 0) {
+            return new Player($id, 0, $username, $role);
+        }
+        return false;
+    }
+    
     public static function playersInGame($gameID) {
         $q = DB::prepare("SELECT * FROM `players` WHERE `game` = ?");
         $q->execute(array($gameID));
         $players = array();
         while($r = $q->fetch()) {
-            array_push($players, new Player($r['id'], $r['game'], $r['username'], $r['role']);
+            array_push($players, new Player($r['id'], $r['game'], $r['username'], $r['role']));
         }
         return $players;
     }

@@ -1,6 +1,6 @@
 <?php
 
-public class Game {
+class Game {
 
     private $id;
     private $roomCode;
@@ -12,18 +12,24 @@ public class Game {
         $this->players = $players;
     }
     
-    public static function joinGame($roomCode) {
+    public static function joinGame($roomCode, $player) {
         $q = DB::prepare("SELECT * FROM `games` WHERE `roomCode` = ? LIMIT 1");
         $q->execute(array($roomCode));
-        $r = $q->fetch();
-        return new Game($r['id'], $r['roomCode'], Player::playersInGame($r['id']));
+        if($q->rowCount() == 1) {
+            $r = $q->fetch();
+            $player->setInGame($r['id']);
+            return new Game($r['id'], $r['roomCode'], Player::playersInGame($r['id']));
+        }
+        else {
+            return false;
+        }
     }
     
     public static function createGame($player) {
-        $roomCode = rand(0, 9) + rand(0, 9) + rand(0, 9) + rand(0, 9);
+        $roomCode = rand(0, 9) . rand(0, 9) . rand(0, 9) . rand(0, 9);
         $q = DB::prepare("INSERT INTO `games` (`roomCode`) VALUES (?)");
         $q->execute(array($roomCode));
-        $id = PDO::lastInsertId();
+        $id = DB::lastInsertId();
         $q = DB::prepare("INSERT INTO `players`");
         $player->setInGame($id);
         $player->setRole(1);
